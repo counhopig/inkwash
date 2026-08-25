@@ -4,6 +4,7 @@
 /inkwash-server/
 /inkwash-desktop/
 /inkwash-mcp/
+/inkwash-firmware/
 
 # Internal / tooling files not meant for the public umbrella
 /.claude/
@@ -12,6 +13,3 @@
 # workspace-local progress/history/plan docs (never commit to the public umbrella)
 /docs/
 *.code-workspace
-
-# Sibling firmware repo (added 2026-08)
-/inkwash-firmware/
