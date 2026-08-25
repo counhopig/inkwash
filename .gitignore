@@ -9,8 +9,8 @@
 /.claude/
 /.omo/
 .DS_Store
-*_HISTORY.md
-*_PLAN.md
+# workspace-local progress/history/plan docs (never commit to the public umbrella)
+/docs/
 *.code-workspace
 
 # Sibling firmware repo (added 2026-08)
