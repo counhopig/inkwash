@@ -68,7 +68,7 @@ Every screen below is rendered directly by the firmware's drawing code.
 
 ## Repositories
 
-The project is split into three sibling repositories; this one is the
+The project is split into four sibling repositories; this one is the
 entry point.
 
 | Repo | What it is | Stack |
@@ -76,7 +76,7 @@ entry point.
 | [**inkwash-firmware**](https://github.com/counhopig/inkwash-firmware) | The Note 4 firmware — calendar, alarms, todos, sync, USB/BLE config | Rust · ESP-IDF · SSD2683 EPD · PCF8563 RTC |
 | [**inkwash-server**](https://github.com/counhopig/inkwash-server) | Personal cloud backend — per-device alarms/todos, sync endpoint, admin UI | Rust · axum · SQLite · Vue 3 |
 | [**inkwash-desktop**](https://github.com/counhopig/inkwash-desktop) | PC tool — configure the device, author content, view logs | Tauri 2 · Vue 3 · TypeScript |
-| [**inkwash-mcp**](https://github.com/counhopig/inkwash-mcp) | MCP server — any agent can push notifications to the device | TypeScript · Bun · MCP |
+| [**inkwash-mcp**](https://github.com/counhopig/inkwash-mcp) | MCP server — agents and scripts push notifications to the device | TypeScript · Bun · MCP |
 
 ## Architecture
 
@@ -86,6 +86,7 @@ flowchart LR
     S -->|"JSON alarms + todos"| D
     T["inkwash-desktop<br/>Tauri 2 + Vue 3"] -->|"USB serial / BLE (set_wifi, set_server, sync_now)"| D
     T -->|"HTTPS admin API (ADMIN_TOKEN)"| S
+    A["agents / scripts<br/>opencode, Claude Code, Codex"] -->|"webhook (channel token)"| S
 ```
 
 The device never authors content. The PC tool pushes configuration over
