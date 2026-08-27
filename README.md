@@ -108,6 +108,11 @@ cd inkwash-desktop && npm install && npm run tauri dev
 # 3. Firmware (needs an ESP-IDF toolchain; see its README)
 git clone https://github.com/counhopig/inkwash-firmware
 cd inkwash-firmware && ./scripts/build-rust.sh --release
+
+# 4. MCP server (let agents / scripts push notifications to a device)
+git clone https://github.com/counhopig/inkwash-mcp
+cd inkwash-mcp && bun install && bun run src/index.ts
+#   requires INKWASH_CHANNEL_ID + INKWASH_WEBHOOK_TOKEN (see its README)
 ```
 
 ## Documentation
