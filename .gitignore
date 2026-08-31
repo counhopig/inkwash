@@ -11,3 +11,6 @@
 /.omo/
 .DS_Store
 *.code-workspace
+
+# documentation
+docs/
