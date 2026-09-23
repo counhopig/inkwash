@@ -22,32 +22,32 @@ inkwash-workspace/
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |------|----------|-------|
-| Cross-repo sync contract (alarms/todos JSON, ETag) | `inkwash-firmware/docs/sync-api.md` | frozen by server `models.rs` fixtures + pinned `inkwash-logic` rev |
-| USB/BLE command protocol | `inkwash-firmware/docs/control-protocol.md` | contract with inkwash-desktop |
+| Cross-repo sync contract (alarms/todos/inbox JSON) | `inkwash-firmware/logic/src/sync_validate.rs` | frozen by server `models.rs` fixtures + pinned `inkwash-logic` rev |
+| USB/BLE command protocol | `inkwash-firmware/logic/src/protocol.rs`, framing in `rust-firmware/src/usb_console.rs` (USB) and `rust-firmware/src/ble_control.rs` (BLE) | contract with inkwash-desktop |
 | Shared wire types | `inkwash-logic` crate (git-pinned from firmware repo) | deserialized by firmware, re-exported by server |
-| Device-side state/alarm behavior | `inkwash-firmware/rust-firmware/src/` | module map in its AGENTS.md |
+| Device-side state/alarm behavior | `inkwash-firmware/logic/src/` (state machine) + `inkwash-firmware/rust-firmware/src/` (hardware) | see the firmware `README.md` |
 | Backend API + storage | `inkwash-server/src/` | see its AGENTS.md |
 | Device registration/config | `inkwash-desktop/` | USB serial/BLE, admin API client |
 | Notification webhook / MCP | `inkwash-mcp/` | `notify` tool posts to the server webhook |
-| Hardware/board reference | `inkwash-firmware/docs/development-guide.md` | GPIO/power rails/EPD; safety section |
+| Hardware/board reference | `inkwash-firmware/rust-firmware/src/board.rs`, `partitions.csv`, `sdkconfig.defaults` | GPIO/power rails/EPD; flashing rules in `inkwash-firmware/AGENTS.md` |
 
 ## CONVENTIONS
 - Each subdir is an independent git repo with its own remotes; the umbrella never tracks code.
-- Conventional Commits, English subjects (`feat:`/`fix:`/`docs:`/`chore:`/`build:`), lowercase type. Firmware `docs/` are written in Chinese.
-- Wire contracts change only by bumping the pinned `inkwash-logic` rev (server Cargo.toml; checked by `scripts/check-logic-pin.sh`) — both sides move together, and `sync-api.md` updates in the same change.
+- Conventional Commits, English subjects (`feat:`/`fix:`/`docs:`/`chore:`/`build:`), lowercase type. Firmware notes are English; the P0-6 recorder sources (`rust-firmware/components/p06_recorder/`, `tools/p06_accept.py`) are Chinese.
+- Wire contracts change only by bumping the pinned `inkwash-logic` rev (server Cargo.toml; checked by `inkwash-server/scripts/check-logic-pin.sh`) — both sides move together, with the firmware sync-validation tests and the server `models.rs` fixtures updated in the same change.
 - ts-rs codegen: server + desktop DTOs regenerate `*.ts` bindings on `cargo test` — commit refreshed bindings with the model change.
 - Rust style is `cargo fmt` defaults; clippy `-D warnings` enforced in firmware `logic/` CI; desktop keeps clippy at zero locally.
 
 ## ANTI-PATTERNS (THIS PROJECT)
-- **Breaking the wire contracts casually** — `Repeat` is serde externally tagged (`"Daily"` / `{"Once":…}`); the UI sends `repeat: "Daily"`. Enforced: server `models.rs` fixture tests + `docs/sync-api.md`.
+- **Breaking the wire contracts casually** — `Repeat` is serde externally tagged (`"Daily"` / `{"Once":…}`); the UI sends `repeat: "Daily"`. Enforced: server `models.rs` fixture tests + `inkwash-logic` `sync_validate`/`alarm_schedule` tests.
 - **Committing secrets** — server `.env` (gitignored; holds `ADMIN_TOKEN`), device tokens, logs with credentials. Never log `DATABASE_URL` (server `main.rs:25`); desktop redacts secrets (`logs.rs`).
 - **Cross-flashing NOTE4 / NOTE4C** — incompatible hardware/waveforms; restore only from this unit's own backup (firmware red line #1).
-- **Retagging to re-trigger releases** — GitHub Actions runs the workflow at the tagged commit; a retag must point at a commit with the latest workflow, after deleting the old release + tag (firmware/server/desktop `release.yml`).
+- **Retagging to re-trigger releases** — a retag must point at a commit carrying the current workflow, after deleting the old release + tag. Server and desktop release from `.github/workflows/release.yml`; firmware is built, verified and published locally by `inkwash-firmware/scripts/release.sh`.
 
 ## UNIQUE STYLES
 - Four independent repos, no monorepo tooling: no workspace configs, no shared lockfile; cross-repo sharing is a git-pinned crate (`inkwash-logic`) + documented protocols.
 - Server embeds `admin-ui/` (Vue 3) into the binary at compile time (rust-embed; `build.rs` runs `npm run build` — needs `node_modules`).
-- Firmware builds/flashes locally (`scripts/build-rust.sh` sources ESP-IDF; CI only covers `logic/`); releases built locally and published via `scripts/release.sh`.
+- Firmware builds/flashes locally (`scripts/build-rust.sh` sources ESP-IDF); CI covers the `logic/` tests plus release, diagnostic and secure firmware builds, and releases are published from the local `scripts/release.sh`.
 - E-paper UI preview: `tools/preview` renders real firmware screens to PNG on PC before flashing.
 - Desktop binary is dual-mode: headless CLI (`--status`/`--sync`/`--ble-scan`/`--ble-list`) plus Tauri GUI.
 
@@ -67,5 +67,5 @@ cd inkwash-mcp && bun install && bun run src/index.ts   # needs INKWASH_CHANNEL_
 - `inkwash.code-workspace` opens the four repos; `.claude/` and `.omo/` are tooling dirs, gitignored.
 - Server `build.rs` panics without `admin-ui/node_modules` — run `npm install --prefix admin-ui` once after cloning.
 - Desktop log dir must stay outside the project tree (`~/Library/Logs/inkwash-desktop`) or `tauri dev` restart-loops.
-- Firmware verification is flash + monitor (`espflash`) — "it compiles" is not vouch; see `development-guide.md` §13 smoke checklist.
+- Firmware verification is flash + monitor (`espflash`) — "it compiles" is not vouch; drive the device with `scripts/smoke-note4.py` and `scripts/capture-serial.py`.
 - Not yet verified on device: full alarm-ringing flow and BLE end-to-end pairing (firmware).

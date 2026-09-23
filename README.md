@@ -52,19 +52,20 @@ images.
 - **Cross-platform desktop app** — Tauri 2 + Vue 3 on Linux, macOS and
   Windows, with a headless CLI for scripting.
 - **E-paper UI preview** — render every firmware screen to PNG from the
-  real font/icon tables before flashing.
+  real font/icon tables before flashing (see [Screens](#screens)).
 
 ## Screens
 
-Every screen below is rendered directly by the firmware's drawing code.
+The device draws every screen itself, and `tools/preview` in the firmware repo
+renders them to PNG on the PC — no images are committed, so none can go stale:
 
-| Home | Calendar | Week view |
-| --- | --- | --- |
-| ![Home](https://raw.githubusercontent.com/counhopig/inkwash-firmware/main/docs/screenshots/home.png) | ![Calendar](https://raw.githubusercontent.com/counhopig/inkwash-firmware/main/docs/screenshots/calendar.png) | ![Week view](https://raw.githubusercontent.com/counhopig/inkwash-firmware/main/docs/screenshots/week-view.png) |
+```bash
+cd inkwash-firmware/tools/preview && cargo run --release
+```
 
-| Alarms | Todos | Inbox |
-| --- | --- | --- |
-| ![Alarms](https://raw.githubusercontent.com/counhopig/inkwash-firmware/main/docs/screenshots/alarms.png) | ![Todos](https://raw.githubusercontent.com/counhopig/inkwash-firmware/main/docs/screenshots/todos.png) | ![Inbox](https://raw.githubusercontent.com/counhopig/inkwash-firmware/main/docs/screenshots/inbox.png) |
+It compiles the firmware's real canvas, font, icon and screen modules in place
+and writes one PNG per screen: home (three variants), GO TO, calendar, week
+view, alarms, todos, inbox, inbox item detail, urgent reminder and alarm ring.
 
 ## Repositories
 
@@ -117,12 +118,15 @@ cd inkwash-mcp && bun install && bun run src/index.ts
 
 ## Documentation
 
+Each contract has exactly one owner, and that owner is code — so a document
+can never drift away from what the repos actually speak.
+
 | Topic | Where |
 | --- | --- |
-| Firmware build / flash / hardware | [`inkwash-firmware` docs](https://github.com/counhopig/inkwash-firmware/tree/main/docs) |
-| USB/BLE control protocol | [`control-protocol.md`](https://github.com/counhopig/inkwash-firmware/blob/main/docs/control-protocol.md) |
-| Sync API contract | [`sync-api.md`](https://github.com/counhopig/inkwash-firmware/blob/main/docs/sync-api.md) |
-| Development guide | [`development-guide.md`](https://github.com/counhopig/inkwash-firmware/blob/main/docs/development-guide.md) |
+| Firmware build / flash / hardware | [`inkwash-firmware` README](https://github.com/counhopig/inkwash-firmware#readme) |
+| USB/BLE control protocol | [`logic/src/protocol.rs`](https://github.com/counhopig/inkwash-firmware/blob/main/logic/src/protocol.rs) (commands and replies), framing in [`rust-firmware/src/usb_console.rs`](https://github.com/counhopig/inkwash-firmware/blob/main/rust-firmware/src/usb_console.rs) and [`ble_control.rs`](https://github.com/counhopig/inkwash-firmware/blob/main/rust-firmware/src/ble_control.rs) |
+| Sync wire contract | [`logic/src/sync_validate.rs`](https://github.com/counhopig/inkwash-firmware/blob/main/logic/src/sync_validate.rs) plus the fixture tests in [`inkwash-server`'s `src/models.rs`](https://github.com/counhopig/inkwash-server/blob/main/src/models.rs) |
+| Device screens | `tools/preview` (see [Screens](#screens)) |
 
 ## Contributing
 
