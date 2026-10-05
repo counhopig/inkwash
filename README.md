@@ -4,144 +4,175 @@
 
 **A calm e-ink calendar, alarms & todos system for the Zectrix Note 4.**
 
-Offline-first. Open source. Built for a 4.2″ e-paper ESP32-S3 notebook.
+Offline-first. Open source. Built for a 4.2″, 400 × 300 monochrome ESP32-S3 notebook.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Target](https://img.shields.io/badge/Target-Zectrix%20Note%204-111111.svg)](https://github.com/counhopig/inkwash-firmware)
-[![Firmware](https://img.shields.io/badge/Firmware-Rust%20%2F%20ESP--IDF-orange.svg)](https://github.com/counhopig/inkwash-firmware)
-[![Server](https://img.shields.io/badge/Server-Rust%20%2F%20axum%20%2F%20SQLite-green.svg)](https://github.com/counhopig/inkwash-server)
+[![Firmware](https://img.shields.io/badge/Firmware-C%2B%2B17%20%2F%20ESP--IDF%20%2F%20LVGL-orange.svg)](https://github.com/counhopig/inkwash-firmware)
+[![Server](https://img.shields.io/badge/Server-Rust%20%2F%20axum-green.svg)](https://github.com/counhopig/inkwash-server)
 [![Desktop](https://img.shields.io/badge/Desktop-Tauri%202%20%2F%20Vue%203-42b883.svg)](https://github.com/counhopig/inkwash-desktop)
 
 </div>
 
----
+## Overview
 
-## Why
+Inkwash turns the Note 4 into a desk clock, calendar, alarms and todos board,
+with an inbox for notifications from agents and external services. The device
+renders structured content locally with LVGL and keeps it in NVS for offline use.
+The PCF8563 RTC wakes the device for scheduled alarms without a network connection.
 
-The Note 4 is a notebook that's usually left on a desk, plugged in, and
-ignored. Inkwash turns it into a device you *consult*: a clock, a
-monthly calendar, and an alarms/todos board — all readable at a glance
-on e-paper, all working **without a network**.
-
-Alarms are stored on the device itself and rung by the RTC hardware, so a
-fully-charged Note 4 wakes you up on time even with Wi-Fi off. Content
-(alarms, todos) lives on your own server and is pulled as structured
-JSON — the device renders it natively, it never shows server-rendered
-images.
+The desktop app configures the device over USB or BLE and manages content on
+your own server. The server stores alarms, todos and notifications; the device
+pulls them over Wi-Fi and uploads local completion, enable and read states.
 
 ## Features
 
-- **Offline-first alarms** — daily, weekly (specific weekdays), monthly
-  (specific days) or one-shot schedules, rung by the PCF8563 hardware
-  alarm with zero network dependency.
-- **Interactive calendar** — month grid with due-today dots; pick any day
-  to open a week view listing exactly what's due.
-- **Todos with intent** — importance (low/med/high), due dates, repeat
-  schedules, and a one-shot reminder for high-priority items.
-- **Notification inbox** — external sources (webhooks, CI, agents) push
-  messages to a device via the server; the device shows an unread badge and
-  a full-screen alert for `alert`-kind items, and marks them read.
-- **Agent-ready notifications** — an MCP server exposes the channel
-  webhook, so opencode, Claude Code, Codex or any script can push a
-  notification to the device (high-priority items ring the URGENT
-  reminder within 30 s).
-- **Self-hosted, personal-scale server** — one shared admin token, per
-  device tokens, ETag caching, embedded admin console in a single binary.
-- **Configure over USB or BLE** — no on-device text input; Wi-Fi, server
-  and timezone are pushed from the desktop tool.
-- **Cross-platform desktop app** — Tauri 2 + Vue 3 on Linux, macOS and
-  Windows, with a headless CLI for scripting.
-- **E-paper UI preview** — render every firmware screen to PNG from the
-  real font/icon tables before flashing (see [Screens](#screens)).
-
-## Screens
-
-The device draws every screen itself, and `tools/preview` in the firmware repo
-renders them to PNG on the PC — no images are committed, so none can go stale:
-
-```bash
-cd inkwash-firmware/tools/preview && cargo run --release
-```
-
-It compiles the firmware's real canvas, font, icon and screen modules in place
-and writes one PNG per screen: home (three variants), GO TO, calendar, week
-view, alarms, todos, inbox, inbox item detail, urgent reminder and alarm ring.
+- **Offline alarms** — daily, weekly, monthly and one-shot schedules, with
+  RTC wake and audio reminders.
+- **Calendar and todos** — month and week views, due dates, repeating todos,
+  importance levels and reminders.
+- **Notification inbox** — webhook messages with unread status and detail
+  views; unread high-priority alerts trigger a full-screen audio reminder.
+- **MCP notifications** — a `notify` tool and CLI for agents and scripts,
+  with stable delivery idempotency keys and a 10-second request timeout.
+- **Self-hosted backend** — SQLite or PostgreSQL, an embedded Vue admin
+  console, console accounts with device ownership, an owner admin token,
+  per-device sync tokens and per-channel webhook tokens.
+- **USB and BLE configuration** — clock, timezone, Wi-Fi and HTTPS server
+  settings, status queries and manual synchronization.
+- **Cross-platform desktop app** — Tauri 2 and Vue 3 on Linux, macOS and
+  Windows, plus a headless CLI for device status, sync and RTC alignment.
+- **Power-aware display** — partial clock refreshes, automatic light and
+  deep sleep, button and RTC wake, and boot-loop safe mode.
 
 ## Repositories
 
-The project is split into four sibling repositories; this one is the
-entry point.
+Each product lives in an independent repository. This workspace is the entry point.
 
-| Repo | What it is | Stack |
+| Repository | Role | Stack |
 | --- | --- | --- |
-| [**inkwash-firmware**](https://github.com/counhopig/inkwash-firmware) | The Note 4 firmware — calendar, alarms, todos, sync, USB/BLE config | Rust · ESP-IDF · SSD2683 EPD · PCF8563 RTC |
-| [**inkwash-server**](https://github.com/counhopig/inkwash-server) | Personal cloud backend — per-device alarms/todos, sync endpoint, admin UI | Rust · axum · SQLite · Vue 3 |
-| [**inkwash-desktop**](https://github.com/counhopig/inkwash-desktop) | PC tool — configure the device, author content, view logs | Tauri 2 · Vue 3 · TypeScript |
-| [**inkwash-mcp**](https://github.com/counhopig/inkwash-mcp) | MCP server — agents and scripts push notifications to the device | TypeScript · Bun · MCP |
+| [inkwash-firmware](https://github.com/counhopig/inkwash-firmware) | Device UI, alarms, persistence, sync and USB/BLE control | C++17 · ESP-IDF 5.5.5 · LVGL 9 |
+| [inkwash-server](https://github.com/counhopig/inkwash-server) | Content, device and account management, sync and webhooks | Rust · axum · SQLite/PostgreSQL · Vue 3 |
+| [inkwash-desktop](https://github.com/counhopig/inkwash-desktop) | Device configuration, content management and diagnostics | Tauri 2 · Rust · Vue 3 · TypeScript |
+| [inkwash-mcp](https://github.com/counhopig/inkwash-mcp) | MCP notification tool and stdio CLI | TypeScript · Bun · MCP |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    D["inkwash-firmware<br/>Zectrix Note 4"] -->|"HTTPS POST /api/sync (done/enabled flags)"| S["inkwash-server<br/>Rust + axum + SQLite"]
-    S -->|"JSON alarms + todos"| D
-    T["inkwash-desktop<br/>Tauri 2 + Vue 3"] -->|"USB serial / BLE (set_wifi, set_server, sync_now)"| D
-    T -->|"HTTPS admin API (ADMIN_TOKEN)"| S
-    A["agents / scripts<br/>opencode, Claude Code, Codex"] -->|"webhook (channel token)"| S
+    D["Note 4<br/>C++ / ESP-IDF / LVGL"] -->|"HTTPS POST /api/sync<br/>local changes + read acknowledgments"| S["inkwash-server<br/>SQLite / PostgreSQL"]
+    S -->|"JSON alarms + todos + inbox"| D
+    T["inkwash-desktop<br/>Tauri 2 / Vue 3"] -->|"USB serial / authenticated BLE"| D
+    T -->|"Admin API"| S
+    U["Browser<br/>embedded admin console"] -->|"Account session / owner token"| S
+    A["Agents / scripts"] --> M["inkwash-mcp<br/>notify / CLI"]
+    M -->|"Webhook + channel token"| S
 ```
 
-The device never authors content. The PC tool pushes configuration over
-USB/BLE; the server holds the source of truth for content; the device
-pulls it over Wi-Fi and stores it locally so everything keeps working
-offline.
+Synchronization validates server results and journals them in NVS before applying
+content. Startup resumes an interrupted apply, and alarm or todo changes made
+while sync runs remain pending for the next upload. Urgent polling checks for
+high-priority notifications while the application is active; delivery timing
+also depends on connectivity, sleep and retry state.
+
+BLE pairing displays a passkey and times out after two minutes. USB Wi-Fi
+configuration verifies connectivity before saving credentials. BLE Wi-Fi
+configuration saves credentials and closes pairing; connectivity is checked by
+the subsequent sync when Wi-Fi and server settings are available.
 
 ## Getting started
 
-```bash
-# 1. Server (backend + embedded admin console)
+Clone the repositories as siblings and run each command from its own checkout.
+The server and desktop need Rust and Node.js; the MCP server needs Bun.
+Firmware builds require ESP-IDF **5.5.5** with the ESP32-S3 toolchain.
+
+### Server
+
+```sh
 git clone https://github.com/counhopig/inkwash-server
-cd inkwash-server && ./scripts/start.sh
+cd inkwash-server
+./scripts/start.sh
+```
 
-# 2. Desktop (register devices, author content, configure the device)
+The script creates a private `.env` with an `ADMIN_TOKEN`, installs admin console
+dependencies and starts the server. Open `http://localhost:8080` to create an
+account or sign in as the owner and register a device. SQLite is the default;
+set `DATABASE_URL` to a PostgreSQL connection URL to use PostgreSQL.
+
+### Desktop
+
+```sh
 git clone https://github.com/counhopig/inkwash-desktop
-cd inkwash-desktop && npm install && npm run tauri dev
+cd inkwash-desktop
+npm install
+npm run tauri dev
+```
 
-# 3. Firmware (needs an ESP-IDF toolchain; see its README)
+Connect to the server, register a device and retain its device token. Connect the
+Note 4 over USB or BLE, configure its clock, timezone, Wi-Fi, HTTPS server URL
+and token, then trigger synchronization. Manage alarms, todos, channels and
+inbox messages through the desktop app or browser console.
+
+### Firmware
+
+```sh
 git clone https://github.com/counhopig/inkwash-firmware
-cd inkwash-firmware && ./scripts/build-rust.sh --release
+cd inkwash-firmware
+git submodule update --init firmware/components/lvgl
+./scripts/build/build-cpp.sh
+```
 
-# 4. MCP server (let agents / scripts push notifications to a device)
+Set `IDF_PATH` for a nonstandard ESP-IDF installation. The default build output
+is `firmware/build/`. On Windows, use `scripts\build\build-cpp.ps1` from
+PowerShell. Follow the firmware README for board identity checks, backup and
+flashing instructions.
+
+### MCP notifications
+
+Create a webhook channel for the device in the desktop app or server console,
+and retain its one-time delivery token.
+
+```sh
 git clone https://github.com/counhopig/inkwash-mcp
-cd inkwash-mcp && bun install && bun run src/index.ts
-#   requires INKWASH_CHANNEL_ID + INKWASH_WEBHOOK_TOKEN (see its README)
+cd inkwash-mcp
+bun install
+export INKWASH_SERVER_URL="http://127.0.0.1:8080"
+export INKWASH_CHANNEL_ID="<channel-id>"
+export INKWASH_WEBHOOK_TOKEN="<channel-token>"
+bun run src/index.ts
+```
+
+Register that command and environment in your MCP client to use `notify`.
+The CLI also accepts configuration from `~/.config/inkwash/config`:
+
+```sh
+bun run src/notify-client.ts "Deploy finished" "All services are green"
+bun run src/notify-client.ts --high "Build failed" "CI needs attention"
 ```
 
 ## Documentation
 
-Each contract has exactly one owner, and that owner is code — so a document
-can never drift away from what the repos actually speak.
-
-| Topic | Where |
+| Topic | Source |
 | --- | --- |
-| Firmware build / flash / hardware | [`inkwash-firmware` README](https://github.com/counhopig/inkwash-firmware#readme) |
-| USB/BLE control protocol | [`logic/src/protocol.rs`](https://github.com/counhopig/inkwash-firmware/blob/main/logic/src/protocol.rs) (commands and replies), framing in [`rust-firmware/src/usb_console.rs`](https://github.com/counhopig/inkwash-firmware/blob/main/rust-firmware/src/usb_console.rs) and [`ble_control.rs`](https://github.com/counhopig/inkwash-firmware/blob/main/rust-firmware/src/ble_control.rs) |
-| Sync wire contract | [`logic/src/sync_validate.rs`](https://github.com/counhopig/inkwash-firmware/blob/main/logic/src/sync_validate.rs) plus the fixture tests in [`inkwash-server`'s `src/models.rs`](https://github.com/counhopig/inkwash-server/blob/main/src/models.rs) |
-| Device screens | `tools/preview` (see [Screens](#screens)) |
+| Firmware build, flash, hardware and power behavior | [Firmware README](https://github.com/counhopig/inkwash-firmware#readme) |
+| Device screens | [LVGL screens](https://github.com/counhopig/inkwash-firmware/blob/main/firmware/main/ui/screens.cc) |
+| USB/BLE commands and replies | [Protocol codec](https://github.com/counhopig/inkwash-firmware/blob/main/firmware/main/core/protocol.cc), [USB transport](https://github.com/counhopig/inkwash-firmware/blob/main/firmware/main/control/usb_console.cc), [BLE transport](https://github.com/counhopig/inkwash-firmware/blob/main/firmware/main/control/ble.cc) |
+| Device sync validation and persistence payloads | [Sync codec](https://github.com/counhopig/inkwash-firmware/blob/main/firmware/main/core/sync_payload.cc) |
+| Server API, authentication and storage | [Server README](https://github.com/counhopig/inkwash-server#readme), [models and wire fixtures](https://github.com/counhopig/inkwash-server/blob/main/src/models.rs) |
+| Desktop setup, CLI and logs | [Desktop README](https://github.com/counhopig/inkwash-desktop#readme) |
+| MCP configuration and notification delivery | [MCP README](https://github.com/counhopig/inkwash-mcp#readme) |
 
 ## Contributing
 
-Found a bug or have an idea? Open an issue in the relevant repository —
-firmware logic in `inkwash-firmware`, backend in `inkwash-server`, UI
-in `inkwash-desktop`. Pull requests are welcome; please keep changes
-focused and match the existing style.
+Open issues and pull requests in the repository responsible for the change.
+Keep device control and synchronization JSON compatible across firmware,
+server and desktop. Firmware core tests cover hardware-free logic; device
+acceptance checks cover USB, BLE, sync, alarm audio and sleep/wake behavior.
 
-> **Hardware note:** the firmware targets the black-and-white Zectrix
-> Note 4 only. The Note 4C has different hardware — do not flash one
-> image onto the other.
+The firmware targets the monochrome Zectrix Note 4. The Note 4C has different
+hardware and requires its own firmware image.
 
 ## License
 
-[Apache-2.0](LICENSE). The firmware bundles the TRMNL16 font (SIL Open
-Font License 1.1) and code ported from the official
-`itopinion/zectrix-note4-epd-demo` (MIT) — see each repository's LICENSE
-and the `font8x16.rs` header for details.
+[Apache-2.0](LICENSE). Firmware font licensing is documented in
+[FONT_LICENSE.txt](https://github.com/counhopig/inkwash-firmware/blob/main/firmware/assets/FONT_LICENSE.txt).
